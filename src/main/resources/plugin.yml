@@ -1,0 +1,7 @@
+name: Makaprez
+version: ${project.version}
+main: com.github.sanctum.makaprez.MakaprezPlugin
+api-version: 1.16
+depend: [ Labyrinth ]
+authors: [ Hempfest ]
+description: Voting for a server president.
