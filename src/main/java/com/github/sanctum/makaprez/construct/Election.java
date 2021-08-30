@@ -35,8 +35,8 @@ public class Election {
 	private final PollRenderer render;
 	private boolean started;
 
-	public Election() {
-		this.max = 10;
+	public Election(int cap) {
+		this.max = cap;
 		Plugin pl = JavaPlugin.getProvidingPlugin(MakaprezPlugin.class);
 		this.key = new NamespacedKey(pl, "election");
 		this.container = LabyrinthProvider.getInstance().getContainer(key);
@@ -101,10 +101,18 @@ public class Election {
 	}
 
 	public void stop() {
+		if (!started) return;
 		pause();
 		if (task != null) {
 			task.cancelTask();
 		}
+	}
+
+	public void clear() {
+		container.delete("votes");
+		properties.clear();
+		stop();
+		task = null;
 	}
 
 	public boolean isPaused() {

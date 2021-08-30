@@ -18,21 +18,7 @@ public class CommandVote extends CommandBuilder {
 	@Override
 	public boolean apply(Player p, String label, String[] args) {
 		if (args.length == 0) {
-			OfflinePlayer n = Arrays.stream(Bukkit.getOfflinePlayers()).filter(pl -> pl.getName().equalsIgnoreCase("Hempfest")).findFirst().orElse(null);
 
-			if (n != null) {
-
-				if (!Makaprez.getInstance().getElection().isPaused()) {
-					if (Makaprez.getInstance().getElection().vote(new Vote(n.getUniqueId(), p.getUniqueId()))) {
-						Message.form(p).send("&6Your vote for player " + n.getName() + " went through!");
-					} else {
-						Message.form(p).send("&cSomething went wrong, unable to proceed. Perhaps you already voted?");
-					}
-				} else {
-					Message.form(p).send("&cTis not the season for voting right now... Try again later.");
-				}
-
-			}
 			return true;
 		}
 

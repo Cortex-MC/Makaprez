@@ -5,23 +5,24 @@ import com.github.sanctum.labyrinth.command.CommandRegistration;
 import com.github.sanctum.labyrinth.data.Registry;
 import com.github.sanctum.labyrinth.event.custom.Subscribe;
 import com.github.sanctum.labyrinth.event.custom.Vent;
-import com.github.sanctum.labyrinth.formatting.string.DefaultColor;
 import com.github.sanctum.labyrinth.formatting.string.GradientColor;
 import com.github.sanctum.labyrinth.library.Message;
+import com.github.sanctum.labyrinth.library.TextLib;
+import com.github.sanctum.labyrinth.library.VaultPlayer;
 import com.github.sanctum.makaprez.api.Makaprez;
 import com.github.sanctum.makaprez.construct.Candidate;
 import com.github.sanctum.makaprez.construct.Election;
 import com.github.sanctum.makaprez.construct.President;
+import com.github.sanctum.makaprez.event.ActiveElectionEvent;
 import com.github.sanctum.makaprez.event.ElectionEvent;
 import com.github.sanctum.makaprez.event.PollRenderDisplayEvent;
-import com.github.sanctum.makaprez.event.PollRenderEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,8 +38,7 @@ public final class MakaprezPlugin extends JavaPlugin implements Makaprez {
 	public void onEnable() {
 		// Plugin startup logic
 		Bukkit.getServicesManager().register(Makaprez.class, this, this, ServicePriority.Normal);
-		election = new Election();
-		election.start();
+		election = new Election(10);
 
 		UUID pres = LabyrinthProvider.getInstance().getContainer(election.getNamespace()).get(UUID.class, "president");
 
@@ -46,6 +46,7 @@ public final class MakaprezPlugin extends JavaPlugin implements Makaprez {
 			president = new President().setPresident(pres);
 		} else {
 			president = new President();
+			election.start();
 		}
 
 		new Registry<>(Command.class).source(this).pick("com.github.sanctum.makaprez.command").operate(CommandRegistration::use);
@@ -78,13 +79,37 @@ public final class MakaprezPlugin extends JavaPlugin implements Makaprez {
 			String color2 = String.format("#%06x", random.nextInt(0xffffff + 1));
 			GradientColor color = new GradientColor(color1, color2);
 			colorMap.put(entry.getValue(), color);
-			m.send("(" + colorMap.get(entry.getValue()) + entry.getKey() + "&f) &7&l| " + color.context(bars.toString()).translate());
+			m.build(TextLib.getInstance().textHoverable("(" + colorMap.get(entry.getValue()).context(":" + entry.getKey() + ":").translate() + "&f) &7&l| ", color.context(bars.toString()).translate(), "&6&l" + color.context(entry.getValue().getData().getName()).translate() + "&f: (&b" + election.count(entry.getValue()) + "&f)"));
 		}
-		StringBuilder footer = new StringBuilder();
-		candidateMap.forEach((key, value) -> footer.append(colorMap.get(value)).append(key).append("&r").append(" = ").append(value.getData().getName()).append(" &7(").append(e.getElection().count(value)).append(")").append("&r, "));
 		m.send(" ");
 		m.send(border);
-		m.send(footer.toString());
+	}
+
+	@Subscribe
+	public void onElection(ActiveElectionEvent e) {
+		if (Bukkit.getOnlinePlayers().size() == 0) return;
+		for (Candidate c : e.getElection().top(5)) {
+			if (e.getElection().count(c) >= 10) {
+				e.getElection().stop();
+				Message.loggedFor(JavaPlugin.getProvidingPlugin(MakaprezPlugin.class)).broadcast("&eSay hello to president &6&l" + c.getData().getName());
+				if (getPresident().isSet()) {
+					String previous = LabyrinthProvider.getInstance().getContainer(election.getNamespace()).get(String.class, "rank");
+					if (previous != null) {
+						for (String w : Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toSet())) {
+							Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usetg " + getPresident().getPuppet().getName() + " " + w + " " + previous);
+						}
+					}
+				}
+
+				LabyrinthProvider.getInstance().getContainer(election.getNamespace()).attach("president", c.getData().getUniqueId());
+				LabyrinthProvider.getInstance().getContainer(election.getNamespace()).attach("rank", VaultPlayer.wrap(c.getData()).getGroup(Bukkit.getWorlds().get(0).getName()).getName());
+				for (String w : Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toSet())) {
+					Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usetg " + c.getData().getName() + " " + w + " President");
+				}
+				getPresident().setPresident(c.getData().getUniqueId());
+				e.getElection().clear();
+			}
+		}
 	}
 
 	@Subscribe(priority = Vent.Priority.READ_ONLY)
