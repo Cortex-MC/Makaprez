@@ -63,16 +63,13 @@ public class Election {
 
 	public boolean vote(Vote vote) {
 		if (isPaused()) return false;
-		//if (ballet().stream().anyMatch(v -> v.getVoter().equals(vote.getVoter()))) return false;
+		if (ballet().stream().anyMatch(v -> v.getVoter().equals(vote.getVoter()))) return false;
 		if (count(vote.getData()) >= max) {
 			return false;
 		}
-		/*
 		if (ballet().stream().anyMatch(v -> v.equals(vote))) {
 			return false;
 		}
-
-		 */
 		properties.add(vote);
 		return true;
 	}
