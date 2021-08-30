@@ -1,6 +1,7 @@
 package com.github.sanctum.makaprez.api;
 
-import java.util.List;
+import com.github.sanctum.makaprez.construct.Election;
+import com.github.sanctum.makaprez.construct.President;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 

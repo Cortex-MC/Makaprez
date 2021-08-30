@@ -1,4 +1,4 @@
-package com.github.sanctum.makaprez.api;
+package com.github.sanctum.makaprez.construct;
 
 import com.github.sanctum.labyrinth.formatting.string.GradientColor;
 import com.github.sanctum.labyrinth.library.StringUtils;
@@ -20,6 +20,14 @@ public class President {
 
 	public void setPercentage(double percentage) {
 		this.percentage = percentage;
+	}
+
+	public double getMajorityPercentage() {
+		return percentage;
+	}
+
+	public boolean isSet() {
+		return president != null;
 	}
 
 	public OfflinePlayer getPuppet() {
